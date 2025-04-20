@@ -1,0 +1,60 @@
+﻿@page "/brand/create"
+@inject BrandService BrandService
+@inject NavigationManager NavManager
+
+<EditForm Model="Brand" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    @if (!string.IsNullOrEmpty(alertMessage))
+    {
+        <div class="alert @alertClass alert-dismissible fade show" role="alert">
+            @alertMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">➕ Add New Brand</h4>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="name" class="form-label">Brand Name</label>
+                <InputText id="name" class="form-control" @bind-Value="Brand.Name" />
+                <ValidationMessage For="@(() => Brand.Name)" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" class="form-control" rows="4" @bind-Value="Brand.Description" />
+                <ValidationMessage For="@(() => Brand.Description)" />
+            </div>
+            <button type="submit" class="btn btn-success">💾 Add Brand</button>
+            <button type="button" class="btn btn-secondary ms-2" @onclick='() => NavManager.NavigateTo("/brands") '>Back</button>
+        </div>
+    </div>
+</EditForm>
+
+
+@code {
+    private BrandAddDTO Brand = new();
+    private string alertMessage;
+    private string alertClass;
+
+    private async Task HandleValidSubmit()
+    {
+        var response = await BrandService.AddBrandAsync(Brand);
+
+        if (response.Isuccess)
+        {
+            alertClass = "alert-success";
+            alertMessage = response.Message ?? "Thêm danh mục thành công!";
+  
+            await Task.Delay(2000);
+            NavManager.NavigateTo("/brands");
+        }
+        else
+        {
+            alertClass = "alert-danger";
+            alertMessage = response.Message ?? "Thêm danh mục thất bại!";
+        }
+    }
+}

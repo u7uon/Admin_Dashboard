@@ -1,0 +1,79 @@
+﻿@page "/categories/edit/{id:int}"
+@inject CategoryService CategoryService
+@inject NavigationManager NavManager
+
+<EditForm Model="category" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (!string.IsNullOrEmpty(alertMessage))
+    {
+        <div class="alert @alertClass alert-dismissible fade show" role="alert">
+            @alertMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (category == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">✏️ Edit Category</h4>
+            </div>
+            <div class="card-body">
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">Category Name</label>
+                    <InputText id="name" class="form-control" @bind-Value="category.Name" />
+                    <ValidationMessage For="@(() => category.Name)" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label">Description</label>
+                    <InputTextArea id="description" class="form-control" rows="4" @bind-Value="category.Description" />
+                    <ValidationMessage For="@(() => category.Description)" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">💾 Save Changes</button>
+                <button type="button" class="btn btn-secondary ms-2" @onclick='() => NavManager.NavigateTo("/categories")'>Back</button>
+
+            </div>
+        </div>
+    }
+</EditForm>
+
+
+@code {
+    [Parameter] public int id { get; set; }
+    private CategoryAddDTO category;
+    private string alertMessage;
+    private string alertClass;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var cat = await CategoryService.GetCategoryByIdAsync(id);
+        category = new CategoryAddDTO { Id = cat.Id, Name = cat.Name, Description = cat.Description };
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var response = await CategoryService.UpdateCategoryAsync(category);
+
+        if (response.Isuccess)
+        {
+            alertClass = "alert-success";
+            alertMessage = response.Message ?? "Cập nhật danh mục thành công!";
+            await Task.Delay(1000);
+            NavManager.NavigateTo("/categories");
+        }
+        else
+        {
+            alertClass = "alert-danger";
+            alertMessage = response.Message ?? "Cập nhật thất bại!";
+        }
+    }
+}

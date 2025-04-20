@@ -1,0 +1,68 @@
+﻿@page "/categories/create"
+@inject CategoryService CategoryService
+@inject NavigationManager NavManager
+
+<EditForm Model="category" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (!string.IsNullOrEmpty(alertMessage))
+    {
+        <div class="alert @alertClass alert-dismissible fade show" role="alert">
+            @alertMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">➕ Add New Category</h4>
+        </div>
+        <div class="card-body">
+
+            <div class="mb-3">
+                <label for="name" class="form-label">Category Name</label>
+                <InputText id="name" class="form-control" @bind-Value="category.Name" />
+                <ValidationMessage For="@(() => category.Name)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <InputTextArea id="description" class="form-control" rows="4" @bind-Value="category.Description" />
+                <ValidationMessage For="@(() => category.Description)" />
+            </div>
+
+            <button type="submit" class="btn btn-success">💾 Add Category</button>
+            <button type="button" class="btn btn-secondary ms-2" @onclick='() => NavManager.NavigateTo("/categories") '>Back</button>
+
+        </div>
+    </div>
+
+</EditForm>
+
+
+
+@code {
+    private CategoryAddDTO category = new();
+    private string alertMessage;
+    private string alertClass;
+
+    private async Task HandleValidSubmit()
+    {
+        var response = await CategoryService.AddCategoryAsync(category);
+
+        if (response.Isuccess)
+        {
+            alertClass = "alert-success";
+            alertMessage = response.Message ?? "Thêm danh mục thành công!";
+  
+            await Task.Delay(2000);
+            NavManager.NavigateTo("/categories");
+        }
+        else
+        {
+            alertClass = "alert-danger";
+            alertMessage = response.Message ?? "Thêm danh mục thất bại!";
+        }
+    }
+}

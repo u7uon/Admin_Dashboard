@@ -1,0 +1,89 @@
+﻿@page "/categories/{id:int}"
+@inject CategoryService CategoryService
+
+<div class="container mt-4">
+    @if (category == null)
+    {
+        <div class="d-flex align-items-center">
+            <div class="spinner-border text-primary me-2" role="status"></div>
+            <strong>Loading category data...</strong>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h3 class="text-primary">@category.Name</h3>
+                <p class="text-muted">@category.Description</p>
+
+                <hr />
+                <h5 class="mt-4 mb-3">📦 Product List:</h5>
+
+                @if (category.Products?.Any() == true)
+                {
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Image</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var product in category.Products)
+                            {
+                                <tr>
+                                    <td>@product.Id</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(product.Image))
+                                        {
+                                            <img src="@($"https://localhost:7081/api/product/images/{product.Image}")" alt="@product.Name" width="80" class="img-thumbnail" />
+                                        }
+                                        else
+                                        {
+                                            <span>No image</span>
+                                        }
+                                    </td>
+                                    <td>@product.Name</td>
+                                    <td>@product.Price.ToString("C0", new System.Globalization.CultureInfo("en-US"))</td>
+                                    <td>@product.Quantity</td>
+                                    <td>@product.Description</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="fst-italic text-muted">There are no products in this category.</p>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+
+@code {
+    [Parameter] public int id { get; set; }
+    private CategoryGetDTO category;
+
+    protected override async Task OnInitializedAsync()
+    {
+        category = await CategoryService.GetCategoryByIdAsync(id);
+    }
+
+    private void EditProduct(int id)
+    {
+        // Logic điều hướng hoặc hiển thị modal sửa sản phẩm
+        Console.WriteLine($"Sửa sản phẩm {id}");
+    }
+
+    private void UpdateStatus(int id, bool status)
+    {
+        // Logic cập nhật trạng thái sản phẩm (ví dụ gọi API)
+        Console.WriteLine($"Cập nhật trạng thái sản phẩm {id} thành {(status ? "Hoạt động" : "Vô hiệu hóa")}");
+    }
+}

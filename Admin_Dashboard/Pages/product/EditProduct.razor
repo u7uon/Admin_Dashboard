@@ -1,0 +1,143 @@
+﻿@page "/product/edit/{id:int}"
+@inject NavigationManager navigationManager
+@inject Admin_Dashboard.Service.ProductService productService
+@inject HttpClient Http
+@using Admin_Dashboard.DTOs
+
+<h3>Edit Product</h3>
+
+@if (editModel == null)
+{
+    <p>Loading data...</p>
+}
+else
+{
+    <EditForm Model="editModel" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Product Name</label>
+            <InputText id="name" class="form-control" @bind-Value="editModel.Name" />
+            <ValidationMessage For="@(() => editModel.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <InputTextArea id="description" class="form-control" @bind-Value="editModel.Description" />
+            <ValidationMessage For="@(() => editModel.Description)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="price" class="form-label">Price</label>
+            <InputNumber id="price" class="form-control" @bind-Value="editModel.Price" />
+            <ValidationMessage For="@(() => editModel.Price)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="quantity" class="form-label">Quantity</label>
+            <InputNumber id="quantity" class="form-control" @bind-Value="editModel.Quantity" />
+            <ValidationMessage For="@(() => editModel.Quantity)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Current Image:</label><br />
+            <img src="@currentImageUrl" width="150" />
+        </div>
+
+        <div class="mb-3">
+            <label for="image" class="form-label">Select New Image (if any)</label>
+            <InputFile OnChange="HandleImageUpload" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Category</label>
+            <InputSelect class="form-select" @bind-Value="editModel.CategoryId">
+                <option value="">-- Select Category --</option>
+                @foreach (var category in categoryList)
+                {
+                    <option value="@category.Id">@category.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => editModel.CategoryId)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Brand</label>
+            <InputSelect class="form-select" @bind-Value="editModel.BrandId">
+                <option value="">-- Select Brand --</option>
+                @foreach (var brand in brandList)
+                {
+                    <option value="@brand.BrandId">@brand.Name</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => editModel.BrandId)" />
+        </div>
+
+        <button class="btn btn-primary" type="submit">Save Changes</button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+
+    private ProductAddDTO editModel = new();
+    private string? currentImageUrl;
+    private IBrowserFile? selectedFile;
+    private List<BrandDTO> brandList = [];
+    private List<CategoryDTO> categoryList = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        try
+        {
+            brandList = await Http.GetFromJsonAsync<List<BrandDTO>>("api/brand/all") ?? new List<BrandDTO>();
+            categoryList = await Http.GetFromJsonAsync<List<CategoryDTO>>("api/category/all") ?? new List<CategoryDTO>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading brands/categories: {ex.Message}");
+        }
+
+
+        var product = await productService.GetById(id);
+        Console.WriteLine($"BrandId from product: {product.Brand?.BrandId}");
+
+
+
+
+        if (product != null)
+        {
+            editModel = new ProductAddDTO
+                {
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Quantity = product.Quantity,
+                    BrandId = product.Brand?.BrandId ?? null,
+                    CategoryId = product.Category?.Id ?? null
+                };
+
+            currentImageUrl = product.Image;
+        }
+        Console.WriteLine($"BrandId assigned to editModel: {editModel.BrandId}");
+
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var result = await productService.UpdateProduct(id, editModel, selectedFile);
+        if (result.Isuccess)
+        {
+            navigationManager.NavigateTo("/product"); return;
+        }
+        Console.WriteLine(result.Message);
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+}
